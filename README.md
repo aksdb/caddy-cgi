@@ -174,7 +174,7 @@ syntax. That looks like this:
 
 ``` caddy
 cgi [matcher] exec [args...] {
-    scipt_name subpath
+    script_name subpath
     dir working_directory
     env key1=val1 [key2=val2...]
     pass_env key1 [key2...]

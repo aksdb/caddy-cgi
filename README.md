@@ -165,6 +165,15 @@ cgi /script.cgi* /path/to/my/script someargument {
 }
 ```
 
+Also note that in Caddy v2 there is a behavior change when using the `file_server` directive which makes it incompatible with cgi without special handling. The symptom is that the path to the cgi will not be found which results in a 404 error. To make it work with file_server requires that the cgi directive be embedded within a `handle` directive that uses the same [matcher] for its argument, for example:
+
+``` caddy
+file_server
+handle /report {
+  cgi /report /usr/local/cgi-bin/report
+}
+```
+
 ### Advanced Syntax
 
 In order to specify custom environment variables, pass along one or more

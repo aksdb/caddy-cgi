@@ -22,18 +22,11 @@ import (
 	"net/http"
 	"net/http/cgi"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 )
-
-// currentDir returns the current working directory
-func currentDir() (wdStr string) {
-	wdStr, _ = filepath.Abs(".")
-	return
-}
 
 // passAll returns a slice of strings made up of each environment key
 func passAll() (list []string) {
@@ -47,7 +40,7 @@ func passAll() (list []string) {
 	return
 }
 
-func (c CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	// For convenience: get the currently authenticated user; if some other middleware has set that.
 	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)
 	var username string
@@ -80,7 +73,7 @@ func (c CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Ha
 	envAdd("SCRIPT_FILENAME", cgiHandler.Path)
 	envAdd("SCRIPT_NAME", c.ScriptName)
 	envAdd("SCRIPT_EXEC", fmt.Sprintf("%s %s", cgiHandler.Path, strings.Join(cgiHandler.Args, " ")))
-	cgiHandler.Env = append(cgiHandler.Env, "REMOTE_USER="+username)
+	envAdd("REMOTE_USER", username)
 
 	for _, e := range c.Envs {
 		cgiHandler.Env = append(cgiHandler.Env, repl.ReplaceAll(e, ""))

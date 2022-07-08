@@ -17,8 +17,6 @@
 package cgi
 
 import (
-	"fmt"
-
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
@@ -72,7 +70,7 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	for d.Next() {
 		args := d.RemainingArgs()
 		if len(args) < 1 {
-			return fmt.Errorf("an executable needs to be specified")
+			return d.Err("an executable needs to be specified")
 		}
 		c.Executable = args[0]
 		c.Args = args[1:]
@@ -102,7 +100,7 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			case "inspect":
 				c.Inspect = true
 			default:
-				return fmt.Errorf("unknown subdirective: %q", d.Val())
+				return d.Errf("unknown subdirective: %q", d.Val())
 			}
 		}
 	}
@@ -111,7 +109,7 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 
 // parseCaddyfile unmarshals tokens from h into a new Middleware.
 func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
-	var c CGI
+	c := new(CGI)
 	err := c.UnmarshalCaddyfile(h.Dispenser)
 	return c, err
 }

@@ -166,6 +166,7 @@ cgi [matcher] exec [args...] {
     env key1=val1 [key2=val2...]
     pass_env key1 [key2...]
     pass_all_env
+    buffer_limit <size>
     inspect
 }
 ```
@@ -203,6 +204,19 @@ found. These applications often run fine from the command prompt but fail when
 invoked with CGI. The risk with this subdirective is that a lot of server
 information is shared with the CGI executable. Use this subdirective only with
 CGI applications that you trust not to leak this information.
+
+`buffer_limit` is used when a http request has `Transfer-Endcoding: chunked`.
+The Go CGI Handler refused to handle these kinds of requests, see
+<https://github.com/golang/go/issues/5613>. In order to work around this the
+chunked request is buffered by caddy and sent to the CGI application as a whole
+with the correct `CONTENT_LENGTH` set. The `buffer_limit` setting marks a
+threshold between buffering in memory and using a temporary file. Every request
+body smaller than the `buffer_limit` is buffered in-memory. It accepts all
+formats supported by
+[go-humanize](https://github.com/dustin/go-humanize/blob/master/bytes.go).
+Default: `4MiB`.  
+(An example of this is `git push` if the objects to push are larger than the
+[`http.postBuffer`](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httppostBuffer))
 
 ### Troubleshooting
 

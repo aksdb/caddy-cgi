@@ -21,6 +21,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/dustin/go-humanize"
 	"go.uber.org/zap"
 )
 
@@ -49,6 +50,9 @@ type CGI struct {
 	PassAll bool `json:"passAllEnvs,omitempty"`
 	// True to return inspection page rather than call CGI executable
 	Inspect bool `json:"inspect,omitempty"`
+	// Size of the in memory buffer to buffer chunked transfers
+	// if this size is exceeded a temporary file is used
+	BufferLimit int64 `json:"buffer_limit,omitempty"`
 
 	logger *zap.Logger
 }
@@ -103,6 +107,15 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 				c.PassAll = true
 			case "inspect":
 				c.Inspect = true
+			case "buffer_limit":
+				if !d.NextArg() {
+					return d.ArgErr()
+				}
+				size, err := humanize.ParseBytes(d.Val())
+				if err != nil {
+					return d.Errf("invalid buffer limit '%s': %v", d.Val(), err)
+				}
+				c.BufferLimit = int64(size)
 			default:
 				return d.Errf("unknown subdirective: %q", d.Val())
 			}
@@ -113,6 +126,10 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 
 func (c *CGI) Provision(ctx caddy.Context) error {
 	c.logger = ctx.Logger(c)
+
+	if c.BufferLimit <= 0 {
+		c.BufferLimit = 4 << 20
+	}
 
 	return nil
 }

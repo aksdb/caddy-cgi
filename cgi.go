@@ -20,9 +20,11 @@ package cgi
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/cgi"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -84,6 +86,68 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 	envAdd("SCRIPT_NAME", c.ScriptName)
 	envAdd("SCRIPT_EXEC", fmt.Sprintf("%s %s", cgiHandler.Path, strings.Join(cgiHandler.Args, " ")))
 	envAdd("REMOTE_USER", username)
+
+	// work around Go's CGI not handling chunked transfer encodings
+	// https://github.com/golang/go/issues/5613
+	if len(r.TransferEncoding) > 0 && r.TransferEncoding[0] == "chunked" {
+		// buffer request in memory or temporary file if too large
+		// to make it possible to calculate the CONTENT_LENGTH of the body
+		defer r.Body.Close()
+
+		buf := bufPool.Get().(*bytes.Buffer)
+		buf.Reset()
+		defer bufPool.Put(buf)
+		if buf.Cap() < int(c.BufferLimit) {
+			buf.Grow(int(c.BufferLimit) + bytes.MinRead)
+		}
+
+		size, err := io.CopyN(buf, r.Body, c.BufferLimit)
+		if err != nil && err != io.EOF {
+			return err
+		}
+
+		// if the buffer is full there is probably more,
+		// so use a tempfile to read the rest and use that as request body
+		if size == c.BufferLimit {
+			tempfile, err := os.CreateTemp("", "cgi_body_*")
+			if err != nil {
+				return err
+			}
+			defer os.Remove(tempfile.Name())
+			defer tempfile.Close()
+
+			// write the already read bytes
+			_, err = tempfile.Write(buf.Bytes())
+			if err != nil {
+				return err
+			}
+
+			// reuse the bytes slice of the buffer to copy the rest of the body to the tempfile
+			remainingSize, err := io.CopyBuffer(tempfile, r.Body, buf.Bytes())
+			if err != nil {
+				return err
+			}
+			size += remainingSize
+
+			// seek to start, so it can be read from the beginning
+			_, err = tempfile.Seek(0, io.SeekStart)
+			if err != nil {
+				return err
+			}
+			r.Body = tempfile
+		} else {
+			r.Body = io.NopCloser(buf)
+		}
+
+		// all the request body is read, so it isn't chunked anymore
+		r.TransferEncoding = nil
+		r.Header.Del("Transfer-Encoding")
+
+		// we can set the size of the request body now that we read everything
+		sizeStr := strconv.FormatInt(size, 10)
+		r.Header.Add("Content-Length", sizeStr)
+		r.ContentLength = size
+	}
 
 	for _, e := range c.Envs {
 		cgiHandler.Env = append(cgiHandler.Env, repl.ReplaceAll(e, ""))

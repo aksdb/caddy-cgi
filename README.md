@@ -37,8 +37,8 @@ CGI has some disadvantages. For one, Caddy needs to start a new process
 for each request. This can adversely impact performance and, if
 resources are shared between CGI applications, may require the use of
 some interprocess synchronization mechanism such as a file lock. Your
-server’s responsiveness could in some circumstances be affected, such as
-when your web server is hit with very high demand, when your script’s
+server's responsiveness could in some circumstances be affected, such as
+when your web server is hit with very high demand, when your script's
 dependencies require a long startup, or when concurrently running
 scripts take a long time to respond. However, in many cases, such as
 using a pre-compiled CGI application like fossil or a Lua script, the
@@ -55,7 +55,7 @@ you should be aware when using CGI applications.
 
 <div class="warning">
 
-**CGI scripts should be located outside of Caddy’s document root.**
+**CGI scripts should be located outside of Caddy's document root.**
 Otherwise, an inadvertent misconfiguration could result in Caddy
 delivering the script as an ordinary static resource. At best, this
 could merely confuse the site visitor. At worst, it could expose
@@ -86,9 +86,9 @@ application itself and reported in the headers it returns.
 Your CGI application can be executed directly or indirectly. In the
 direct case, the application can be a compiled native executable or it
 can be a shell script that contains as its first line a shebang that
-identifies the interpreter to which the file’s name should be passed.
+identifies the interpreter to which the file's name should be passed.
 Caddy must have permission to execute the application. On Posix systems
-this will mean making sure the application’s ownership and permission
+this will mean making sure the application's ownership and permission
 bits are set appropriately; on Windows, this may involve properly
 setting up the filename extension association.
 
@@ -128,13 +128,13 @@ For example:
 cgi /report /usr/local/cgi-bin/report
 ```
 
-When a request such as https://example.com/report or
-https://example.com/report/weekly arrives, the cgi middleware will
+When a request such as <https://example.com/report> or
+<https://example.com/report/weekly> arrives, the cgi middleware will
 detect the match and invoke the script named /usr/local/cgi-bin/report.
 The current working directory will be the same as Caddy itself. Here, it
 is assumed that the script is self-contained, for example a pre-compiled
 CGI application or a shell script. Here is an example of a standalone
-script, similar to one used in the cgi plugin’s test suite:
+script, similar to one used in the cgi plugin's test suite:
 
 ``` shell
 #!/bin/bash
@@ -151,7 +151,7 @@ The environment variables `PATH_INFO` and `QUERY_STRING` are populated
 and passed to the script automatically. There are a number of other
 standard CGI variables included that are described below. If you need to
 pass any special environment variables or allow any environment
-variables that are part of Caddy’s process to pass to your script, you
+variables that are part of Caddy's process to pass to your script, you
 will need to use the advanced directive syntax described below.
 
 Beware that in Caddy v2 it is (currently) not possible to separate the
@@ -243,34 +243,38 @@ cgi /wapp/*.tcl /usr/local/bin/wapptclsh /home/quixote/projects{path} {
 
 When you request a matching URL, for example,
 
+``` plain
     https://example.com/wapp/hello.tcl
+```
 
 the Caddy server will deliver a text page similar to the following. The
 CGI application (in this case, wapptclsh) will not be called.
 
-    CGI for Caddy inspection page
-    
-    Executable .................... /usr/local/bin/wapptclsh
-      Arg 1 ....................... /home/quixote/projects/hello.tcl
-    Root .......................... /
-    Dir ........................... /home/quixote/www
-    Environment
-      DB .......................... /usr/local/share/app/app.db
-      PATH_INFO ...................
-      REMOTE_USER .................
-      SCRIPT_EXEC ................. /usr/local/bin/wapptclsh /home/quixote/projects/hello.tcl
-      SCRIPT_FILENAME ............. /usr/local/bin/wapptclsh
-      SCRIPT_NAME ................. /wapp/hello
-      SECRET ...................... /usr/local/share/app/secret
-    Inherited environment
-      HOME ........................ /home/quixote
-      LANG ........................ en_US.UTF-8
-    Placeholders
-      {path} ...................... /hello
-      {root} ...................... /
-      {http.request.host} ......... example.com
-      {http.request.host} ......... GET
-      {http.request.host} ......... /wapp/hello.tcl
+``` plain
+CGI for Caddy inspection page
+
+Executable .................... /usr/local/bin/wapptclsh
+  Arg 1 ....................... /home/quixote/projects/hello.tcl
+Root .......................... /
+Dir ........................... /home/quixote/www
+Environment
+  DB .......................... /usr/local/share/app/app.db
+  PATH_INFO ...................
+  REMOTE_USER .................
+  SCRIPT_EXEC ................. /usr/local/bin/wapptclsh /home/quixote/projects/hello.tcl
+  SCRIPT_FILENAME ............. /usr/local/bin/wapptclsh
+  SCRIPT_NAME ................. /wapp/hello
+  SECRET ...................... /usr/local/share/app/secret
+Inherited environment
+  HOME ........................ /home/quixote
+  LANG ........................ en_US.UTF-8
+Placeholders
+  {path} ...................... /hello
+  {root} ...................... /
+  {http.request.host} ......... example.com
+  {http.request.host} ......... GET
+  {http.request.host} ......... /wapp/hello.tcl
+```
 
 This information can be used to diagnose problems with how a CGI
 application is called.
@@ -345,29 +349,33 @@ executed.
 
 When a browser requests
 
+``` plain
     http://192.168.1.2:8080/show/weekly?mode=summary
+```
 
 the response looks like
 
-    AUTH_TYPE         []
-    CONTENT_LENGTH    []
-    CONTENT_TYPE      []
-    GATEWAY_INTERFACE [CGI/1.1]
-    PATH_INFO         [/weekly]
-    PATH_TRANSLATED   []
-    POST_DATA         []
-    QUERY_STRING      [mode=summary]
-    REMOTE_ADDR       [192.168.1.35]
-    REMOTE_HOST       [192.168.1.35]
-    REMOTE_IDENT      []
-    REMOTE_USER       []
-    REQUEST_METHOD    [GET]
-    SCRIPT_EXEC       [/usr/local/cgi-bin/report/gen]
-    SCRIPT_NAME       [/show]
-    SERVER_NAME       [192.168.1.2:8080]
-    SERVER_PORT       [8080]
-    SERVER_PROTOCOL   [HTTP/1.1]
-    SERVER_SOFTWARE   [go]
+``` plain
+AUTH_TYPE         []
+CONTENT_LENGTH    []
+CONTENT_TYPE      []
+GATEWAY_INTERFACE [CGI/1.1]
+PATH_INFO         [/weekly]
+PATH_TRANSLATED   []
+POST_DATA         []
+QUERY_STRING      [mode=summary]
+REMOTE_ADDR       [192.168.1.35]
+REMOTE_HOST       [192.168.1.35]
+REMOTE_IDENT      []
+REMOTE_USER       []
+REQUEST_METHOD    [GET]
+SCRIPT_EXEC       [/usr/local/cgi-bin/report/gen]
+SCRIPT_NAME       [/show]
+SERVER_NAME       [192.168.1.2:8080]
+SERVER_PORT       [8080]
+SERVER_PROTOCOL   [HTTP/1.1]
+SERVER_SOFTWARE   [go]
+```
 
 When a client makes a POST request, such as with the following command
 
@@ -377,10 +385,12 @@ wget -O - -q --post-data="city=San%20Francisco" http://192.168.1.2:8080/show/wee
 
 the response looks the same except for the following lines:
 
-    CONTENT_LENGTH    [20]
-    CONTENT_TYPE      [application/x-www-form-urlencoded]
-    POST_DATA         [city=San%20Francisco]
-    REQUEST_METHOD    [POST]
+``` plain
+CONTENT_LENGTH    [20]
+CONTENT_TYPE      [application/x-www-form-urlencoded]
+POST_DATA         [city=San%20Francisco]
+REQUEST_METHOD    [POST]
+```
 
 ### Go Source Example
 

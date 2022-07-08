@@ -14,6 +14,7 @@
 			<item>pass_all_env</item>
 			<item>pass_env</item>
 			<item>root</item>
+			<item>script_name</item>
 		</list>
 		<contexts>
 			<context name="Normal" attribute="Normal Text" lineEndContext="#stay">

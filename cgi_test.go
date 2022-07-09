@@ -10,6 +10,8 @@ import (
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest"
 )
 
 func TestCGI_ServeHTTP(t *testing.T) {
@@ -27,6 +29,7 @@ func TestCGI_ServeHTTP(t *testing.T) {
 				ScriptName: "/foo.cgi",
 				Args:       []string{"arg1", "arg2"},
 				Envs:       []string{"CGI_GLOBAL=whatever"},
+				logger:     zaptest.NewLogger(t, zaptest.Level(zap.ErrorLevel)),
 			},
 			uri:        "/foo.cgi/some/path?x=y",
 			statusCode: 200,
@@ -42,6 +45,7 @@ CGI_LOCAL is unset`,
 			name: "Invalid script",
 			cgi: CGI{
 				Executable: "test/example2",
+				logger:     zaptest.NewLogger(t, zaptest.Level(zap.ErrorLevel)),
 			},
 			uri:          "/whatever",
 			statusCode:   500,
@@ -55,6 +59,7 @@ CGI_LOCAL is unset`,
 				Args:       []string{"arg1", "arg2"},
 				Envs:       []string{"some=thing"},
 				Inspect:    true,
+				logger:     zaptest.NewLogger(t, zaptest.Level(zap.ErrorLevel)),
 			},
 			uri:        "/foo.cgi/some/path?x=y",
 			statusCode: 200,

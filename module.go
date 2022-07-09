@@ -21,6 +21,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"go.uber.org/zap"
 )
 
 func init() {
@@ -48,12 +49,15 @@ type CGI struct {
 	PassAll bool `json:"passAllEnvs,omitempty"`
 	// True to return inspection page rather than call CGI executable
 	Inspect bool `json:"inspect,omitempty"`
+
+	logger *zap.Logger
 }
 
 // Interface guards
 var (
 	_ caddyhttp.MiddlewareHandler = (*CGI)(nil)
 	_ caddyfile.Unmarshaler       = (*CGI)(nil)
+	_ caddy.Provisioner           = (*CGI)(nil)
 )
 
 func (c CGI) CaddyModule() caddy.ModuleInfo {
@@ -104,6 +108,12 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			}
 		}
 	}
+	return nil
+}
+
+func (c *CGI) Provision(ctx caddy.Context) error {
+	c.logger = ctx.Logger(c)
+
 	return nil
 }
 

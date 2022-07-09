@@ -18,15 +18,20 @@
 package cgi
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/http/cgi"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"go.uber.org/zap"
 )
+
+var bufPool = sync.Pool{New: func() interface{} { return &bytes.Buffer{} }}
 
 // passAll returns a slice of strings made up of each environment key
 func passAll() (list []string) {
@@ -59,8 +64,13 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 	repl.Set("root", cgiHandler.Root)
 	repl.Set("path", scriptPath)
 
+	errorBuffer := bufPool.Get().(*bytes.Buffer)
+	errorBuffer.Reset()
+	defer bufPool.Put(errorBuffer)
+
 	cgiHandler.Dir = c.WorkingDirectory
 	cgiHandler.Path = repl.ReplaceAll(c.Executable, "")
+	cgiHandler.Stderr = errorBuffer
 	for _, str := range c.Args {
 		cgiHandler.Args = append(cgiHandler.Args, repl.ReplaceAll(str, ""))
 	}
@@ -90,5 +100,10 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 	} else {
 		cgiHandler.ServeHTTP(w, r)
 	}
+
+	if c.logger != nil && errorBuffer.Len() > 0 {
+		c.logger.Error("Error from CGI Application", zap.Stringer("Stderr", errorBuffer))
+	}
+
 	return next.ServeHTTP(w, r)
 }

@@ -5,6 +5,7 @@ modern, full-featured, easy-to-use web server.
 It has been forked from the fantastic work of Kurt Jung who wrote that
 plugin for Caddy 1.
 
+
 Documentation
 
 This plugin lets you generate dynamic content on your website by means
@@ -29,8 +30,8 @@ CGI has some disadvantages. For one, Caddy needs to start a new process
 for each request. This can adversely impact performance and, if
 resources are shared between CGI applications, may require the use of
 some interprocess synchronization mechanism such as a file lock. Your
-server’s responsiveness could in some circumstances be affected, such as
-when your web server is hit with very high demand, when your script’s
+server's responsiveness could in some circumstances be affected, such as
+when your web server is hit with very high demand, when your script's
 dependencies require a long startup, or when concurrently running
 scripts take a long time to respond. However, in many cases, such as
 using a pre-compiled CGI application like fossil or a Lua script, the
@@ -45,13 +46,13 @@ Serving dynamic content exposes your server to more potential threats
 than serving static pages. There are a number of considerations of which
 you should be aware when using CGI applications.
 
-CGI scripts should be located outside of Caddy’s document root.
+CGI SCRIPTS SHOULD BE LOCATED OUTSIDE OF CADDY'S DOCUMENT ROOT.
 Otherwise, an inadvertent misconfiguration could result in Caddy
 delivering the script as an ordinary static resource. At best, this
 could merely confuse the site visitor. At worst, it could expose
 sensitive internal information that should not leave the server.
 
-Mistrust the contents of PATH_INFO, QUERY_STRING and standard input.
+MISTRUST THE CONTENTS OF PATH_INFO, QUERY_STRING AND STANDARD INPUT.
 Most of the environment variables available to your CGI program are
 inherently safe because they originate with Caddy and cannot be modified
 by external users. This is not the case with PATH_INFO, QUERY_STRING
@@ -70,9 +71,9 @@ Application Modes
 Your CGI application can be executed directly or indirectly. In the
 direct case, the application can be a compiled native executable or it
 can be a shell script that contains as its first line a shebang that
-identifies the interpreter to which the file’s name should be passed.
+identifies the interpreter to which the file's name should be passed.
 Caddy must have permission to execute the application. On Posix systems
-this will mean making sure the application’s ownership and permission
+this will mean making sure the application's ownership and permission
 bits are set appropriately; on Windows, this may involve properly
 setting up the filename extension association.
 
@@ -114,7 +115,7 @@ detect the match and invoke the script named /usr/local/cgi-bin/report.
 The current working directory will be the same as Caddy itself. Here, it
 is assumed that the script is self-contained, for example a pre-compiled
 CGI application or a shell script. Here is an example of a standalone
-script, similar to one used in the cgi plugin’s test suite:
+script, similar to one used in the cgi plugin's test suite:
 
     #!/bin/bash
 
@@ -129,7 +130,7 @@ The environment variables PATH_INFO and QUERY_STRING are populated and
 passed to the script automatically. There are a number of other standard
 CGI variables included that are described below. If you need to pass any
 special environment variables or allow any environment variables that
-are part of Caddy’s process to pass to your script, you will need to use
+are part of Caddy's process to pass to your script, you will need to use
 the advanced directive syntax described below.
 
 Beware that in Caddy v2 it is (currently) not possible to separate the
@@ -149,11 +150,12 @@ pattern for a given rule, you will need to use the advanced directive
 syntax. That looks like this:
 
     cgi [matcher] exec [args...] {
-        scipt_name subpath
+        script_name subpath
         dir working_directory
         env key1=val1 [key2=val2...]
         pass_env key1 [key2...]
         pass_all_env
+        buffer_limit <size>
         inspect
     }
 
@@ -191,6 +193,18 @@ is that a lot of server information is shared with the CGI executable.
 Use this subdirective only with CGI applications that you trust not to
 leak this information.
 
+buffer_limit is used when a http request has
+Transfer-Endcoding: chunked. The Go CGI Handler refused to handle these
+kinds of requests, see https://github.com/golang/go/issues/5613. In
+order to work around this the chunked request is buffered by caddy and
+sent to the CGI application as a whole with the correct CONTENT_LENGTH
+set. The buffer_limit setting marks a threshold between buffering in
+memory and using a temporary file. Every request body smaller than the
+buffer_limit is buffered in-memory. It accepts all formats supported by
+go-humanize. Default: 4MiB.
+(An example of this is git push if the objects to push are larger than
+the http.postBuffer)
+
 Troubleshooting
 
 If you run into unexpected results with the CGI plugin, you are able to
@@ -213,7 +227,7 @@ For example, consider this example CGI block:
 
 When you request a matching URL, for example,
 
-    https://example.com/wapp/hello.tcl
+        https://example.com/wapp/hello.tcl
 
 the Caddy server will deliver a text page similar to the following. The
 CGI application (in this case, wapptclsh) will not be called.
@@ -310,7 +324,7 @@ including all arguments, with which the CGI script was executed.
 
 When a browser requests
 
-    http://192.168.1.2:8080/show/weekly?mode=summary
+        http://192.168.1.2:8080/show/weekly?mode=summary
 
 the response looks like
 

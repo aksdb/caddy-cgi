@@ -17,12 +17,12 @@
 package cgi
 
 import (
-	"fmt"
-
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/dustin/go-humanize"
+	"go.uber.org/zap"
 )
 
 func init() {
@@ -50,12 +50,18 @@ type CGI struct {
 	PassAll bool `json:"passAllEnvs,omitempty"`
 	// True to return inspection page rather than call CGI executable
 	Inspect bool `json:"inspect,omitempty"`
+	// Size of the in memory buffer to buffer chunked transfers
+	// if this size is exceeded a temporary file is used
+	BufferLimit int64 `json:"buffer_limit,omitempty"`
+
+	logger *zap.Logger
 }
 
 // Interface guards
 var (
 	_ caddyhttp.MiddlewareHandler = (*CGI)(nil)
 	_ caddyfile.Unmarshaler       = (*CGI)(nil)
+	_ caddy.Provisioner           = (*CGI)(nil)
 )
 
 func (c CGI) CaddyModule() caddy.ModuleInfo {
@@ -72,7 +78,7 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 	for d.Next() {
 		args := d.RemainingArgs()
 		if len(args) < 1 {
-			return fmt.Errorf("an executable needs to be specified")
+			return d.Err("an executable needs to be specified")
 		}
 		c.Executable = args[0]
 		c.Args = args[1:]
@@ -101,17 +107,36 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 				c.PassAll = true
 			case "inspect":
 				c.Inspect = true
+			case "buffer_limit":
+				if !d.NextArg() {
+					return d.ArgErr()
+				}
+				size, err := humanize.ParseBytes(d.Val())
+				if err != nil {
+					return d.Errf("invalid buffer limit '%s': %v", d.Val(), err)
+				}
+				c.BufferLimit = int64(size)
 			default:
-				return fmt.Errorf("unknown subdirective: %q", d.Val())
+				return d.Errf("unknown subdirective: %q", d.Val())
 			}
 		}
 	}
 	return nil
 }
 
+func (c *CGI) Provision(ctx caddy.Context) error {
+	c.logger = ctx.Logger(c)
+
+	if c.BufferLimit <= 0 {
+		c.BufferLimit = 4 << 20
+	}
+
+	return nil
+}
+
 // parseCaddyfile unmarshals tokens from h into a new Middleware.
 func parseCaddyfile(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
-	var c CGI
+	c := new(CGI)
 	err := c.UnmarshalCaddyfile(h.Dispenser)
 	return c, err
 }

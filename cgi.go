@@ -57,7 +57,8 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 		}
 	}
 
-	scriptPath := strings.TrimPrefix(r.URL.Path, c.ScriptName)
+	scriptName := repl.ReplaceAll(c.ScriptName, "")
+	scriptPath := strings.TrimPrefix(r.URL.Path, scriptName)
 
 	var cgiHandler cgi.Handler
 
@@ -78,12 +79,11 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 	}
 
 	envAdd := func(key, val string) {
-		val = repl.ReplaceAll(val, "")
 		cgiHandler.Env = append(cgiHandler.Env, key+"="+val)
 	}
 	envAdd("PATH_INFO", scriptPath)
 	envAdd("SCRIPT_FILENAME", cgiHandler.Path)
-	envAdd("SCRIPT_NAME", c.ScriptName)
+	envAdd("SCRIPT_NAME", scriptName)
 	envAdd("SCRIPT_EXEC", fmt.Sprintf("%s %s", cgiHandler.Path, strings.Join(cgiHandler.Args, " ")))
 	envAdd("REMOTE_USER", username)
 

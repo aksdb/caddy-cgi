@@ -97,18 +97,18 @@ interpreter such as lua, perl or python.
 
 ### Requirements
 
-  - This module needs to be installed (obviously).
-    
-    Refer to the Caddy documentation on how to build Caddy with
-    plugins/modules.
+- This module needs to be installed (obviously).
 
-  - The directive needs to be registered in the Caddyfile:
-    
-    ``` caddy
-    {
-        order cgi last
-    }
-    ```
+  Refer to the Caddy documentation on how to build Caddy with
+  plugins/modules.
+
+- The directive needs to be registered in the Caddyfile:
+
+  ``` caddy
+  {
+      order cgi last
+  }
+  ```
 
 ### Basic Syntax
 
@@ -180,6 +180,7 @@ cgi [matcher] exec [args...] {
     pass_env key1 [key2...]
     pass_all_env
     buffer_limit <size>
+    unbuffered_output
     inspect
 }
 ```
@@ -220,20 +221,27 @@ is that a lot of server information is shared with the CGI executable.
 Use this subdirective only with CGI applications that you trust not to
 leak this information.
 
-`buffer_limit` is used when a http request has `Transfer-Endcoding:
-chunked`. The Go CGI Handler refused to handle these kinds of requests,
-see <https://github.com/golang/go/issues/5613>. In order to work around
-this the chunked request is buffered by caddy and sent to the CGI
-application as a whole with the correct `CONTENT_LENGTH` set. The
-`buffer_limit` setting marks a threshold between buffering in memory and
-using a temporary file. Every request body smaller than the
-`buffer_limit` is buffered in-memory. It accepts all formats supported
-by
+`buffer_limit` is used when a http request has
+`Transfer-Endcoding: chunked`. The Go CGI Handler refused to handle
+these kinds of requests, see <https://github.com/golang/go/issues/5613>.
+In order to work around this the chunked request is buffered by caddy
+and sent to the CGI application as a whole with the correct
+`CONTENT_LENGTH` set. The `buffer_limit` setting marks a threshold
+between buffering in memory and using a temporary file. Every request
+body smaller than the `buffer_limit` is buffered in-memory. It accepts
+all formats supported by
 [go-humanize](https://github.com/dustin/go-humanize/blob/master/bytes.go).
 Default: `4MiB`.  
 (An example of this is `git push` if the objects to push are larger than
 the
 [`http.postBuffer`](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httppostBuffer))
+
+With the `unbuffered_output` subdirective it is possible to instruct the
+CGI handler to flush output from the CGI script as soon as possible. By
+default, the output is buffered into chunks before it is being written
+to optimize the network usage and allow to determine the Content-Length.
+When unbuffered, bytes will be written as soon as possible. This will
+also force the response to be written in chunked encoding.
 
 ### Troubleshooting
 

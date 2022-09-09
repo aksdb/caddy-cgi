@@ -16,6 +16,7 @@
 			<item>root</item>
 			<item>script_name</item>
 			<item>buffer_limit</item>
+			<item>unbuffered_output</item>
 		</list>
 		<contexts>
 			<context name="Normal" attribute="Normal Text" lineEndContext="#stay">

@@ -167,6 +167,7 @@ cgi [matcher] exec [args...] {
     pass_env key1 [key2...]
     pass_all_env
     buffer_limit <size>
+    unbuffered_output
     inspect
 }
 ```
@@ -217,6 +218,13 @@ formats supported by
 Default: `4MiB`.  
 (An example of this is `git push` if the objects to push are larger than the
 [`http.postBuffer`](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httppostBuffer))
+
+With the `unbuffered_output` subdirective it is possible to instruct the CGI
+handler to flush output from the CGI script as soon as possible. By default, the
+output is buffered into chunks before it is being written to optimize the
+network usage and allow to determine the Content-Length. When unbuffered, bytes
+will be written as soon as possible. This will also force the response to be
+written in chunked encoding.
 
 ### Troubleshooting
 

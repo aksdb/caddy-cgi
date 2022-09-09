@@ -53,6 +53,9 @@ type CGI struct {
 	// Size of the in memory buffer to buffer chunked transfers
 	// if this size is exceeded a temporary file is used
 	BufferLimit int64 `json:"buffer_limit,omitempty"`
+	// If set, output from the CGI script is immediately flushed whenever
+	// some bytes have been read.
+	UnbufferedOutput bool `json:"unbufferedOutput,omitempty"`
 
 	logger *zap.Logger
 }
@@ -116,6 +119,8 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 					return d.Errf("invalid buffer limit '%s': %v", d.Val(), err)
 				}
 				c.BufferLimit = int64(size)
+			case "unbuffered_output":
+				c.UnbufferedOutput = true
 			default:
 				return d.Errf("unknown subdirective: %q", d.Val())
 			}

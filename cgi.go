@@ -162,7 +162,11 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 	if c.Inspect {
 		inspect(cgiHandler, w, r, repl)
 	} else {
-		cgiHandler.ServeHTTP(w, r)
+		cgiWriter := w
+		if c.UnbufferedOutput {
+			cgiWriter = instantWriter{w}
+		}
+		cgiHandler.ServeHTTP(cgiWriter, r)
 	}
 
 	if c.logger != nil && errorBuffer.Len() > 0 {
@@ -170,4 +174,14 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 	}
 
 	return next.ServeHTTP(w, r)
+}
+
+type instantWriter struct {
+	http.ResponseWriter
+}
+
+func (iw instantWriter) Write(b []byte) (int, error) {
+	n, err := iw.ResponseWriter.Write(b)
+	iw.ResponseWriter.(http.Flusher).Flush()
+	return n, err
 }

@@ -106,9 +106,14 @@ interpreter such as lua, perl or python.
 
   ``` caddy
   {
-      order cgi last
+      order cgi before respond
   }
   ```
+
+  Adjust the order as needed. Putting CGI before other response-writing
+  handlers should be a sane default, since the CGI module is typically
+  used with a specific matcher and will then take completely over.
+  Manipulating the request after the CGI script is likely not necessary.
 
 ### Basic Syntax
 
@@ -313,7 +318,7 @@ In this example, the Caddyfile looks like this:
 ``` caddy
 {
     http_port 8080
-    order cgi last
+    order cgi before respond
 }
 
 192.168.1.2:8080

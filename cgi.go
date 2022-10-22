@@ -173,7 +173,7 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 		c.logger.Error("Error from CGI Application", zap.Stringer("Stderr", errorBuffer))
 	}
 
-	return next.ServeHTTP(w, r)
+	return nil
 }
 
 type instantWriter struct {

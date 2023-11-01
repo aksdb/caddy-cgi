@@ -47,6 +47,10 @@ func passAll() (list []string) {
 	return
 }
 
+func (c *CGI) notFound(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+	return caddyhttp.Error(http.StatusNotFound, nil)
+}
+
 func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	// For convenience: get the currently authenticated user; if some other middleware has set that.
 	repl := r.Context().Value(caddy.ReplacerCtxKey).(*caddy.Replacer)
@@ -71,8 +75,14 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 	errorBuffer.Reset()
 	defer bufPool.Put(errorBuffer)
 
+	exePath := repl.ReplaceAll(c.Executable, "")
+	_, err := os.Stat(exePath)
+	if err != nil {
+		return c.notFound(w, r, next)
+	}
+
 	cgiHandler.Dir = c.WorkingDirectory
-	cgiHandler.Path = repl.ReplaceAll(c.Executable, "")
+	cgiHandler.Path = exePath
 	cgiHandler.Stderr = errorBuffer
 	for _, str := range c.Args {
 		cgiHandler.Args = append(cgiHandler.Args, repl.ReplaceAll(str, ""))

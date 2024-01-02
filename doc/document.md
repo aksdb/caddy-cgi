@@ -438,6 +438,30 @@ following directive in your Caddy file will make it available:
 cgi /servertime /usr/local/bin/servertime
 ```
 
+### Execute dynamic script
+
+The module is written in a way that it expects the scripts you want it to
+execute to actually exist. A non-existing or non-executable file is considered
+a setup error and will yield a HTTP 500.
+
+If you want to make sure, only existing scripts are executed, use a more
+specific matcher, as explained in the Caddy docs.
+
+Example:
+
+```caddy
+@iscgi {
+    path /cgi/*
+    file {
+        root ./app/
+    }
+}
+cgi @iscgi ./app{path}
+```
+
+When calling a url like `/cgi/foo/bar.pl` it will check if the local file
+`./app/foo/bar.pl` exists and only then it will proceed with calling the CGI.
+
 [agedu]: http://www.chiark.greenend.org.uk/~sgtatham/agedu/
 [auth]: https://caddyserver.com/docs/basicauth
 [badge-mit]: https://img.shields.io/badge/license-MIT-blue.svg

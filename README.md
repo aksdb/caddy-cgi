@@ -102,6 +102,10 @@ interpreter such as lua, perl or python.
   Refer to the Caddy documentation on how to build Caddy with
   plugins/modules.
 
+  > **Note**: If you build manually, beware to include the major version
+  > in the module path. For example
+  > `xcaddy build --with=github.com/aksdb/caddy-cgi/v2`.
+
 - The directive needs to be registered in the Caddyfile:
 
   ``` caddy

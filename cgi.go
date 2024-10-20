@@ -163,8 +163,13 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 		inspect(cgiHandler, w, r, repl)
 	} else {
 		cgiWriter := w
+
 		if c.UnbufferedOutput {
-			cgiWriter = instantWriter{w}
+			if _, isFlusher := w.(http.Flusher); isFlusher {
+				cgiWriter = instantWriter{w}
+			} else {
+				c.logger.Warn("Cannot write response without buffer.")
+			}
 		}
 		cgiHandler.ServeHTTP(cgiWriter, r)
 	}

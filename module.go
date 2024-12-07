@@ -28,6 +28,7 @@ import (
 func init() {
 	caddy.RegisterModule(CGI{})
 	httpcaddyfile.RegisterHandlerDirective("cgi", parseCaddyfile)
+	httpcaddyfile.RegisterDirectiveOrder("cgi", httpcaddyfile.Before, "respond")
 }
 
 // CGI implements a CGI handler that executes binary files following the

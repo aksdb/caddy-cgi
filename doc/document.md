@@ -87,25 +87,12 @@ such as lua, perl or python.
 
 ### Requirements
 
-* This module needs to be installed (obviously).
+This module needs to be installed (obviously).
 
-  Refer to the Caddy documentation on how to build Caddy with plugins/modules.
+Refer to the Caddy documentation on how to build Caddy with plugins/modules.
 
-  > **Note**: If you build manually, beware to include the major version in the
-  > module path. For example `xcaddy build --with=github.com/aksdb/caddy-cgi/v2`.
-  
-* The directive needs to be registered in the Caddyfile:
-
-  ```caddy
-  {
-      order cgi before respond
-  }
-  ```
-  
-  Adjust the order as needed. Putting CGI before other response-writing handlers
-  should be a sane default, since the CGI module is typically used with a specific
-  matcher and will then take completely over. Manipulating the request after the
-  CGI script is likely not necessary.
+> **Note**: If you build manually, beware to include the major version in the
+> module path. For example `xcaddy build --with=github.com/aksdb/caddy-cgi/v2`.
 
 ### Basic Syntax
 

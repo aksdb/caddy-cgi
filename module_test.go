@@ -15,7 +15,6 @@ func TestCGI_CaddyModule(t *testing.T) {
 		admin localhost:2999
 		http_port     9080
 		https_port    9443
-		order cgi before respond
 	}
 	localhost:9080 {
 		cgi /foo* ./test/example

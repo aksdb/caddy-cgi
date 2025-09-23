@@ -1,4 +1,4 @@
-module github.com/aksdb/caddy-cgi/v2
+module github.com/walkthru-lat/caddy-cgi/v2
 
 go 1.24.0
 

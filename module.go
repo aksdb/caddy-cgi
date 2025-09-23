@@ -57,6 +57,9 @@ type CGI struct {
 	// If set, output from the CGI script is immediately flushed whenever
 	// some bytes have been read.
 	UnbufferedOutput bool `json:"unbufferedOutput,omitempty"`
+	// Enable Windows CGI header parsing fix for applications that output \r\r\n
+	// instead of standard \r\n line endings (e.g., MapServer on Windows)
+	WindowsHeaderFix bool `json:"windowsHeaderFix,omitempty"`
 
 	logger *zap.Logger
 }
@@ -122,6 +125,8 @@ func (c *CGI) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 				c.BufferLimit = int64(size)
 			case "unbuffered_output":
 				c.UnbufferedOutput = true
+			case "windows_header_fix":
+				c.WindowsHeaderFix = true
 			default:
 				return d.Errf("unknown subdirective: %q", d.Val())
 			}

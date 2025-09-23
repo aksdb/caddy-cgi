@@ -171,7 +171,14 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 				c.logger.Warn("Cannot write response without buffer.")
 			}
 		}
-		cgiHandler.ServeHTTP(cgiWriter, r)
+
+		// Use Windows CGI handler if Windows header fix is enabled
+		if c.WindowsHeaderFix {
+			windowsHandler := &WindowsCGIHandler{Handler: cgiHandler}
+			windowsHandler.ServeHTTP(cgiWriter, r)
+		} else {
+			cgiHandler.ServeHTTP(cgiWriter, r)
+		}
 	}
 
 	if c.logger != nil && errorBuffer.Len() > 0 {

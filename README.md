@@ -177,6 +177,7 @@ cgi [matcher] exec [args...] {
     pass_all_env
     buffer_limit <size>
     unbuffered_output
+    windows_header_fix
     inspect
 }
 ```
@@ -238,6 +239,14 @@ default, the output is buffered into chunks before it is being written
 to optimize the network usage and allow to determine the Content-Length.
 When unbuffered, bytes will be written as soon as possible. This will
 also force the response to be written in chunked encoding.
+
+The `windows_header_fix` subdirective enables a special header parsing mode
+designed to handle CGI applications that output non-standard line endings
+on Windows. Some applications (notably MapServer on Windows) output `\r\r\n`
+(double carriage return + newline) instead of the standard `\r\n` line endings
+for CGI headers. This causes parsing failures and "Premature end of script headers"
+errors. When this option is enabled, the CGI handler will properly parse headers
+with either standard or Windows-specific line endings.
 
 ### Troubleshooting
 

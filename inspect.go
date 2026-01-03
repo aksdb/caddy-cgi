@@ -35,15 +35,12 @@ type kvType struct {
 func inspect(hnd cgi.Handler, w http.ResponseWriter, req *http.Request, rep *caddy.Replacer) {
 	var buf bytes.Buffer
 
-	printf := func(format string, args ...interface{}) {
+	printf := func(format string, args ...any) {
 		fmt.Fprintf(&buf, format, args...)
 	}
 
 	kvPrint := func(indentStr, keyStr, valStr string) {
-		dotLen := 30 - len(keyStr) - len(indentStr)
-		if dotLen < 2 {
-			dotLen = 2
-		}
+		dotLen := max(30-len(keyStr)-len(indentStr), 2)
 		dotStr := strings.Repeat(".", dotLen)
 		printf("%s%s %s %s\n", indentStr, keyStr, dotStr, valStr)
 	}
@@ -101,5 +98,5 @@ func inspect(hnd cgi.Handler, w http.ResponseWriter, req *http.Request, rep *cad
 	repPrint("{path}", "{root}", "{http.request.host}", "{http.request.method}", "{http.request.uri.path}")
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	buf.WriteTo(w)
+	_, _ = buf.WriteTo(w)
 }

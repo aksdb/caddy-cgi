@@ -33,7 +33,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var bufPool = sync.Pool{New: func() interface{} { return &bytes.Buffer{} }}
+var bufPool = sync.Pool{New: func() any { return &bytes.Buffer{} }}
 
 // passAll returns a slice of strings made up of each environment key
 func passAll() (list []string) {
@@ -92,7 +92,9 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 	if len(r.TransferEncoding) > 0 && r.TransferEncoding[0] == "chunked" {
 		// buffer request in memory or temporary file if too large
 		// to make it possible to calculate the CONTENT_LENGTH of the body
-		defer r.Body.Close()
+		defer func() {
+			_ = r.Body.Close()
+		}()
 
 		buf := bufPool.Get().(*bytes.Buffer)
 		buf.Reset()
@@ -113,8 +115,10 @@ func (c *CGI) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.H
 			if err != nil {
 				return err
 			}
-			defer os.Remove(tempfile.Name())
-			defer tempfile.Close()
+			defer func() {
+				_ = tempfile.Close()
+				_ = os.Remove(tempfile.Name())
+			}()
 
 			// write the already read bytes
 			_, err = tempfile.Write(buf.Bytes())

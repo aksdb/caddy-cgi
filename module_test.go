@@ -1,11 +1,12 @@
 package cgi
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/caddyserver/caddy/v2/caddytest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"testing"
 )
 
 func TestCGI_CaddyModule(t *testing.T) {

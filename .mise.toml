@@ -1,0 +1,48 @@
+[tools]
+go = "latest"
+golangci-lint = "latest"
+pandoc = "latest"
+
+[tasks."doc:readme"]
+description = "Generate README.md"
+sources = ["doc/document.md"]
+outputs = ["README.md"]
+run = "pandoc --read=markdown --write=gfm < doc/document.md > README.md"
+
+[tasks."doc:html"]
+description = "Generate doc/index.html"
+sources = ["doc/document.md", "doc/html.txt", "doc/caddy.xml"]
+outputs = ["doc/index.html"]
+run = """
+pandoc --read=markdown --write=html --template=doc/html.txt \
+	--metadata pagetitle=\"CGI for Caddy\" --syntax-definition=doc/caddy.xml < doc/document.md > doc/index.html
+"""
+
+[tasks."doc:go"]
+description = "Generate doc.go"
+sources = ["doc/document.md", "doc/go.awk"]
+outputs = ["doc.go"]
+run = """
+pandoc --read=markdown --write=plain doc/document.md | awk --assign=package_name=cgi --file=doc/go.awk > doc.go
+gofmt -s -w doc.go
+"""
+
+[tasks.doc]
+description = "Generate all documentation"
+depends = ["doc:readme", "doc:html", "doc:go"]
+
+[tasks.cover]
+description = "Run tests and build coverage report"
+run = "go test -v -coverprofile=coverage && go tool cover -html=coverage -o=coverage.html"
+
+[tasks.lint]
+description = "Run the linter"
+run = "golangci-lint run"
+
+[tasks.fix]
+description = "Run the linter and fix as much as possible"
+run = "golangci-lint run --fix"
+
+[tasks.clean]
+description = "Remove build related files"
+run = "rm -f coverage coverage.html"
